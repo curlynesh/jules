@@ -42,6 +42,7 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
     isSyncing,
     syncError,
     history,
+    finalProfile,
     initializeSession,
     setResponseAndAdvance,
     goBack,
@@ -68,19 +69,38 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   if (isComplete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] dark:bg-slate-900 p-6">
-        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center space-y-6">
+        <div className="max-w-2xl w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center space-y-6">
           <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto" />
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Assessment Complete</h2>
           <p className="text-lg text-slate-700 dark:text-slate-300">
             Thank you for completing the {schema.title}. Your answers have been securely saved.
           </p>
-          <div className="pt-4">
+
+          {finalProfile && (
+              <div className="mt-8 text-left border-t pt-8 dark:border-slate-700">
+                  <h3 className="text-2xl font-bold mb-6 text-slate-900 dark:text-slate-100">Your Operating Manual</h3>
+                  <div className="space-y-6">
+                    {finalProfile.map((profile, idx) => (
+                        <div key={idx} className="bg-slate-50 dark:bg-slate-700 p-6 rounded-xl border border-slate-200 dark:border-slate-600">
+                            <div className="flex justify-between items-center mb-2">
+                                <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-200">{profile.traitName}</h4>
+                                <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 py-1 px-3 rounded-full text-sm font-bold">Score: {profile.score}</span>
+                            </div>
+                            <p className="text-lg font-medium text-blue-700 dark:text-blue-300 mb-2">{profile.workingStyle}</p>
+                            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{profile.environmentNeed}</p>
+                        </div>
+                    ))}
+                  </div>
+              </div>
+          )}
+
+          <div className="pt-8">
              <button
               onClick={() => {
                 clearState();
                 initializeSession(schema);
               }}
-              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 rounded-xl font-medium transition-colors"
+              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 rounded-xl font-medium transition-colors focus:outline-none focus:ring-4 focus:ring-slate-300"
             >
               Start Over
             </button>

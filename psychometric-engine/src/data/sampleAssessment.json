@@ -71,5 +71,32 @@
       "trait_category": "Context_Switching_Fluidity",
       "weight_modifier": 1.0
     }
-  ]
+  ],
+  "trait_metadata": {
+    "Context_Switching_Friction": {
+      "maxPossibleScore": 2.5,
+      "thresholds": [
+        {
+          "max": 33,
+          "style": "Fluid Shifter",
+          "need": "Can handle standard office interruptions."
+        },
+        {
+          "max": 100,
+          "style": "Deep-Focus Specialist",
+          "need": "Requires blocked calendar time and asynchronous communication to thrive."
+        }
+      ]
+    },
+    "Context_Switching_Fluidity": {
+        "maxPossibleScore": 1.0,
+        "thresholds": [
+          {
+            "max": 100,
+            "style": "Dynamic Responder",
+            "need": "Thrives in fast-paced, shifting environments."
+          }
+        ]
+    }
+  }
 }

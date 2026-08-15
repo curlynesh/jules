@@ -48,6 +48,24 @@ export interface ScoringRule {
   weight_modifier: number;
 }
 
+export interface TraitThreshold {
+  max: number;
+  style: string;
+  need: string;
+}
+
+export interface TraitMetadata {
+  maxPossibleScore: number;
+  thresholds: TraitThreshold[];
+}
+
+export interface TraitProfile {
+  traitName: string;
+  score: number; // 0-100
+  workingStyle: string;
+  environmentNeed: string;
+}
+
 export interface AssessmentSchema {
   id: string; // Adding required ID field
   title: string; // Adding required Title field
@@ -56,4 +74,5 @@ export interface AssessmentSchema {
   nodes: Node[];
   logic_edges: LogicEdge[];
   scoring_rules: ScoringRule[];
+  trait_metadata?: Record<string, TraitMetadata>;
 }

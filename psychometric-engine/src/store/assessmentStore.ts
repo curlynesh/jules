@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AssessmentSchema, AnswerType } from '../types/schema';
+import { AssessmentSchema, AnswerType, TraitProfile } from '../types/schema';
 import { getNextNodeId } from '../utils/engine';
 
 interface AssessmentState {
@@ -16,6 +16,9 @@ interface AssessmentState {
   lastSavedAt: Date | null;
   syncError: string | null;
   isComplete: boolean;
+
+  // Final Results
+  finalProfile: TraitProfile[] | null;
 
   // Actions
   initializeSession: (schema: AssessmentSchema, resumeNodeId?: string | null, pastResponses?: Record<string, AnswerType>) => void;
@@ -79,6 +82,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
   lastSavedAt: null,
   syncError: null,
   isComplete: false,
+  finalProfile: null,
 
   initializeSession: (schema, resumeNodeId, pastResponses = {}) => {
     // On mount, load from localStorage optionally
@@ -109,7 +113,7 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
     });
   },
 
-  setResponseAndAdvance: (nodeId, value) => {
+  setResponseAndAdvance: async (nodeId, value) => {
     const { schema, currentNodeId, history, responses } = get();
     if (!schema || !currentNodeId) return;
 
@@ -157,6 +161,27 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       if (typeof window !== 'undefined') {
         localStorage.removeItem(`assessment_${schema.id}`); // Clear local state on complete
       }
+
+      // Finalize scoring
+      try {
+        const sessionId = "mock-session-123"; // In a real app, this comes from auth/init
+        const result = await fetch('/api/assessments/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            assessmentId: schema.id,
+            responses: newResponses
+          })
+        });
+
+        if (result.ok) {
+           const data = await result.json();
+           set({ finalProfile: data.profile });
+        }
+      } catch (err) {
+        console.error("Failed to complete assessment", err);
+      }
     }
   },
 
@@ -190,7 +215,8 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       responses: {},
       currentNodeId: schema?.nodes[0]?.id || null,
       history: [],
-      isComplete: false
+      isComplete: false,
+      finalProfile: null
     });
     if (typeof window !== 'undefined' && schema) {
       localStorage.removeItem(`assessment_${schema.id}`);
