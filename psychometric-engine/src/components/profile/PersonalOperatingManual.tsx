@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TraitProfile } from '../../types/schema';
-import { Share2, Lock, EyeOff, Edit3, Download, Clock } from 'lucide-react';
+import { Accommodation } from '../../types/accommodations';
+import { getRecommendedAccommodations } from '../../data/accommodationMatrix';
+import { AccommodationCurator } from '../accommodations/AccommodationCurator';
+import { DisclosureExport } from '../accommodations/DisclosureExport';
+import { Share2, Lock, EyeOff, Edit3, Download, Clock, Briefcase } from 'lucide-react';
 
 interface Props {
   profile: TraitProfile[];
@@ -63,6 +67,7 @@ const EditableCard: React.FC<{
 
 export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart }) => {
     const [showShareModal, setShowShareModal] = useState(false);
+    const [accommodationMode, setAccommodationMode] = useState<'none' | 'curate' | 'export'>('none');
 
     // Mock state for visibility toggles
     const [visibility, setVisibility] = useState<Record<string, boolean>>(() => {
@@ -71,9 +76,37 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart })
         return initial;
     });
 
+    const [recommendedAccs, setRecommendedAccs] = useState<Accommodation[]>([]);
+    const [selectedAccs, setSelectedAccs] = useState<Accommodation[]>([]);
+
+    useEffect(() => {
+        // Safe set state inside effect by wrapping in a timeout to defer it
+        const timeoutId = setTimeout(() => {
+            setRecommendedAccs(getRecommendedAccommodations(profile));
+        }, 0);
+        return () => clearTimeout(timeoutId);
+    }, [profile]);
+
     const toggleVisibility = (traitName: string) => {
         setVisibility(prev => ({ ...prev, [traitName]: !prev[traitName] }));
     };
+
+    if (accommodationMode === 'curate') {
+        return <AccommodationCurator
+            recommendations={recommendedAccs}
+            onComplete={(selected) => {
+                setSelectedAccs(selected);
+                setAccommodationMode('export');
+            }}
+        />;
+    }
+
+    if (accommodationMode === 'export') {
+        return <DisclosureExport
+            selectedAccommodations={selectedAccs}
+            onBack={() => setAccommodationMode('none')}
+        />;
+    }
 
     return (
         <div className="max-w-4xl w-full mx-auto pb-24">
@@ -85,7 +118,7 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart })
                 </button>
                 <button
                     onClick={() => setShowShareModal(true)}
-                    className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-6 py-2 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold rounded-xl transition-colors shadow-sm"
                 >
                     <Share2 size={18} /> Share Profile
                 </button>
@@ -111,6 +144,22 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart })
                     </ul>
                 </div>
             </section>
+
+            {/* Accommodation CTA */}
+            {recommendedAccs.length > 0 && (
+                <section className="mb-12 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-3xl p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h3 className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">Build your Accommodation Request</h3>
+                        <p className="text-blue-800 dark:text-blue-200 text-lg">We&apos;ve identified {recommendedAccs.length} potential workplace accommodations that fit your profile.</p>
+                    </div>
+                    <button
+                        onClick={() => setAccommodationMode('curate')}
+                        className="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 shrink-0"
+                    >
+                        <Briefcase size={20} /> Review Suggestions
+                    </button>
+                </section>
+            )}
 
             {/* Zone B & C: Modifiable Trait Cards */}
             <section className="space-y-6">
