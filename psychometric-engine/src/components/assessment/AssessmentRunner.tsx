@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AssessmentSchema } from '../../types/schema';
 import { useAssessmentStore } from '../../store/assessmentStore';
 import { useAccessibilityStore } from '../../store/accessibilityStore';
+import { useTelemetryStore } from '../../store/telemetryStore';
 import { QuestionDisplay } from './QuestionDisplay';
 import { PersonalOperatingManual } from '../profile/PersonalOperatingManual';
 import { ArrowLeft, CloudLightning, CloudOff } from 'lucide-react';
 import { AccessibilityControls } from './AccessibilityControls';
+import { calculateProfileConfidence } from '../../utils/psychometrics';
 
 interface Props {
   schema: AssessmentSchema;
@@ -29,6 +31,10 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   } = useAssessmentStore();
 
   const { highContrast, dyslexicFont, setInitialConfigs } = useAccessibilityStore();
+  const { recordNodeEntry, recordNodeExit, getTotalHesitations, getAverageResponseTime } = useTelemetryStore();
+
+  // Track previous node to record exits accurately
+  const prevNodeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     initializeSession(schema);
@@ -37,6 +43,23 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
     });
   }, [schema, initializeSession, setInitialConfigs]);
 
+  // Telemetry Hooks
+  useEffect(() => {
+      if (currentNodeId && currentNodeId !== prevNodeIdRef.current) {
+          if (prevNodeIdRef.current) {
+              recordNodeExit(prevNodeIdRef.current);
+          }
+          recordNodeEntry(currentNodeId);
+          prevNodeIdRef.current = currentNodeId;
+      }
+
+      if (isComplete && prevNodeIdRef.current) {
+          recordNodeExit(prevNodeIdRef.current);
+          prevNodeIdRef.current = null;
+      }
+  }, [currentNodeId, isComplete, recordNodeEntry, recordNodeExit]);
+
+
   const currentNode = schema.nodes.find(n => n.id === currentNodeId);
   const totalQuestions = schema.nodes.length;
   const answeredCount = Object.keys(responses).length;
@@ -44,6 +67,8 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   const canGoBack = schema.config?.allow_back_navigation !== false && history.length > 0;
 
   if (isComplete && finalProfile) {
+    const confidenceScore = calculateProfileConfidence(getTotalHesitations(), getAverageResponseTime());
+
     return (
       <div className={`min-h-screen bg-[#FAFAFA] dark:bg-slate-900 p-6 pt-24 transition-colors duration-300 ${
         highContrast ? 'bg-black text-white' : 'text-slate-900 dark:text-slate-100'
@@ -51,6 +76,7 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
         <AccessibilityControls />
         <PersonalOperatingManual
           profile={finalProfile}
+          confidenceScore={confidenceScore}
           onRestart={() => {
             clearState();
             initializeSession(schema);

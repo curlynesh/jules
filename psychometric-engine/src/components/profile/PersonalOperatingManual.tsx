@@ -4,10 +4,11 @@ import { Accommodation } from '../../types/accommodations';
 import { getRecommendedAccommodations } from '../../data/accommodationMatrix';
 import { AccommodationCurator } from '../accommodations/AccommodationCurator';
 import { DisclosureExport } from '../accommodations/DisclosureExport';
-import { Share2, Lock, EyeOff, Edit3, Download, Clock, Briefcase } from 'lucide-react';
+import { Share2, Lock, EyeOff, Edit3, Download, Clock, Briefcase, Activity } from 'lucide-react';
 
 interface Props {
   profile: TraitProfile[];
+  confidenceScore?: number;
   onRestart: () => void;
 }
 
@@ -65,7 +66,7 @@ const EditableCard: React.FC<{
     );
 };
 
-export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart }) => {
+export const PersonalOperatingManual: React.FC<Props> = ({ profile, confidenceScore, onRestart }) => {
     const [showShareModal, setShowShareModal] = useState(false);
     const [accommodationMode, setAccommodationMode] = useState<'none' | 'curate' | 'export'>('none');
 
@@ -80,7 +81,6 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart })
     const [selectedAccs, setSelectedAccs] = useState<Accommodation[]>([]);
 
     useEffect(() => {
-        // Safe set state inside effect by wrapping in a timeout to defer it
         const timeoutId = setTimeout(() => {
             setRecommendedAccs(getRecommendedAccommodations(profile));
         }, 0);
@@ -129,8 +129,15 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, onRestart })
                 <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-blue-500 rounded-full opacity-10 blur-3xl"></div>
 
                 <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Personal Operating Manual</h1>
-                <div className="inline-block px-4 py-2 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm mb-8">
-                    <p className="text-lg font-medium text-blue-100">Deep-Focus Specialist & Asynchronous Communicator</p>
+                <div className="flex flex-wrap gap-3 items-center mb-8">
+                    <div className="inline-block px-4 py-2 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm">
+                        <p className="text-lg font-medium text-blue-100">Deep-Focus Specialist & Asynchronous Communicator</p>
+                    </div>
+                    {confidenceScore !== undefined && (
+                        <div className="inline-flex items-center gap-1 px-3 py-2 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30 text-sm font-bold backdrop-blur-sm">
+                            <Activity size={16} /> Data Confidence: {confidenceScore}%
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
