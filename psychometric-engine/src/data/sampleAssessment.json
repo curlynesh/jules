@@ -1,0 +1,59 @@
+{
+  "id": "neuro-inclusive-comms-v1",
+  "version": "1.0",
+  "title": "Communication Preferences Profile",
+  "description": "Understand your communication style and needs for a better workplace experience.",
+  "traits": [
+    {
+      "id": "directness",
+      "name": "Communication Directness",
+      "description": "Preference for explicit vs. implied communication."
+    },
+    {
+      "id": "synchronicity",
+      "name": "Synchronicity Preference",
+      "description": "Preference for asynchronous vs. real-time communication."
+    }
+  ],
+  "startNodeId": "q1",
+  "nodes": [
+    {
+      "type": "question",
+      "id": "q1",
+      "questionType": "likert",
+      "text": "I prefer receiving feedback in writing rather than in a spontaneous conversation.",
+      "options": [
+        { "id": "o1", "text": "Strongly Disagree", "value": 1, "traitMappings": [{ "traitId": "synchronicity", "weight": -2 }] },
+        { "id": "o2", "text": "Disagree", "value": 2, "traitMappings": [{ "traitId": "synchronicity", "weight": -1 }] },
+        { "id": "o3", "text": "Neutral", "value": 3, "traitMappings": [{ "traitId": "synchronicity", "weight": 0 }] },
+        { "id": "o4", "text": "Agree", "value": 4, "traitMappings": [{ "traitId": "synchronicity", "weight": 1 }] },
+        { "id": "o5", "text": "Strongly Agree", "value": 5, "traitMappings": [{ "traitId": "synchronicity", "weight": 2 }] }
+      ]
+    },
+    {
+      "type": "logic",
+      "id": "l1",
+      "conditions": [
+        { "questionId": "q1", "operator": "greater_than", "value": 3, "nextId": "q2" }
+      ],
+      "defaultNextId": "q3"
+    },
+    {
+      "type": "question",
+      "id": "q2",
+      "questionType": "open_text",
+      "text": "What specific tools (e.g., Slack, Email) do you prefer for asynchronous feedback?",
+      "allowAudioVideo": true
+    },
+    {
+      "type": "question",
+      "id": "q3",
+      "questionType": "binary",
+      "text": "Do you find implied meanings or 'reading between the lines' exhausting?",
+      "options": [
+        { "id": "o1", "text": "Yes", "value": 1, "traitMappings": [{ "traitId": "directness", "weight": 2 }] },
+        { "id": "o2", "text": "No", "value": 0, "traitMappings": [{ "traitId": "directness", "weight": -1 }] }
+      ]
+    }
+  ]
+}
