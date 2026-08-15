@@ -4,11 +4,35 @@ import React, { useState, useEffect } from 'react';
 import { AssessmentSchema } from '../../types/schema';
 import { useAssessmentStore } from '../../store/assessmentStore';
 import { QuestionDisplay } from './QuestionDisplay';
-import { ArrowLeft, Settings, CheckCircle2, CloudLightning, CloudOff } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CloudLightning, CloudOff } from 'lucide-react';
 
 interface Props {
   schema: AssessmentSchema;
 }
+
+const AccessibilityControls: React.FC<{
+  highContrast: boolean;
+  toggleContrast: () => void;
+  dyslexicFont: boolean;
+  toggleFont: () => void;
+}> = ({ highContrast, toggleContrast, dyslexicFont, toggleFont }) => {
+  return (
+    <div className="fixed top-4 right-4 flex space-x-3 z-50">
+      <button
+        onClick={toggleContrast}
+        className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {highContrast ? 'Standard Contrast' : 'High Contrast'}
+      </button>
+      <button
+        onClick={toggleFont}
+        className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {dyslexicFont ? 'Standard Font' : 'Dyslexia Font'}
+      </button>
+    </div>
+  );
+};
 
 export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   const {
@@ -29,7 +53,6 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
 
   const [highContrast, setHighContrast] = useState(false);
   const [dyslexicFont, setDyslexicFont] = useState(defaultDyslexicFont);
-  const [showSettings, setShowSettings] = useState(false);
 
   // Initialize store on mount
   useEffect(() => {
@@ -44,11 +67,11 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
 
   if (isComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center space-y-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] dark:bg-slate-900 p-6">
+        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center space-y-6">
           <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto" />
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Assessment Complete</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Assessment Complete</h2>
+          <p className="text-lg text-slate-700 dark:text-slate-300">
             Thank you for completing the {schema.title}. Your answers have been securely saved.
           </p>
           <div className="pt-4">
@@ -57,7 +80,7 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
                 clearState();
                 initializeSession(schema);
               }}
-              className="text-blue-600 hover:text-blue-700 font-medium underline"
+              className="px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100 rounded-xl font-medium transition-colors"
             >
               Start Over
             </button>
@@ -72,28 +95,35 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
-      highContrast ? 'bg-black text-white' : 'bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white'
+      highContrast ? 'bg-black text-white' : 'bg-[#FAFAFA] dark:bg-slate-900 text-slate-900 dark:text-slate-100'
     } ${dyslexicFont ? 'font-dyslexic' : 'font-sans'}`}>
 
+      <AccessibilityControls
+        highContrast={highContrast}
+        toggleContrast={() => setHighContrast(!highContrast)}
+        dyslexicFont={dyslexicFont}
+        toggleFont={() => setDyslexicFont(!dyslexicFont)}
+      />
+
       {/* Header / Navigation */}
-      <header className="w-full p-4 md:p-6 flex justify-between items-center z-10">
+      <header className="w-full p-6 pt-20 md:pt-6 flex justify-between items-center z-10 max-w-4xl mx-auto">
         <button
           onClick={goBack}
           disabled={!canGoBack}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-colors font-medium text-lg focus:outline-none focus:ring-4 focus:ring-blue-300 ${
             canGoBack
-              ? 'hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer'
-              : 'opacity-30 cursor-not-allowed'
+              ? 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer'
+              : 'opacity-30 cursor-not-allowed text-slate-500'
           }`}
           aria-label="Go back to previous question"
         >
-          <ArrowLeft size={20} />
-          <span className="font-medium hidden sm:inline">Back</span>
+          <ArrowLeft size={24} />
+          <span className="hidden sm:inline">Back</span>
         </button>
 
         {/* Progress Bar Container */}
-        <div className="flex-1 max-w-md mx-8 hidden sm:block">
-           <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="flex-1 max-w-md mx-8">
+           <div className="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
              <div
                className="h-full bg-blue-600 transition-all duration-500 ease-out"
                style={{ width: `${progress}%` }}
@@ -101,59 +131,26 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
                aria-valuenow={progress}
                aria-valuemin={0}
                aria-valuemax={100}
+               aria-label="Assessment Progress"
              />
            </div>
 
            {/* Sync Status Indicator */}
-           <div className="flex justify-center mt-2 h-4">
+           <div className="flex justify-center mt-3 h-4">
              {syncError ? (
-               <span className="text-xs text-orange-500 flex items-center gap-1 font-medium">
-                  <CloudOff size={12} /> {syncError}
+               <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                  <CloudOff size={16} /> {syncError}
                </span>
              ) : isSyncing ? (
-               <span className="text-xs text-gray-400 flex items-center gap-1">
-                  <CloudLightning size={12} className="animate-pulse text-blue-400" /> Saving...
+               <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
+                  <CloudLightning size={16} className="animate-pulse text-blue-500" /> Saving securely...
                </span>
              ) : null}
            </div>
         </div>
 
-        <div className="relative">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Accessibility settings"
-          >
-            <Settings size={24} />
-          </button>
-
-          {/* Accessibility Settings Dropdown */}
-          {showSettings && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-4 flex flex-col gap-4 z-50">
-              <h3 className="font-semibold text-lg border-b dark:border-gray-700 pb-2">Accessibility</h3>
-
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="font-medium">High Contrast</span>
-                <input
-                  type="checkbox"
-                  checked={highContrast}
-                  onChange={(e) => setHighContrast(e.target.checked)}
-                  className="w-5 h-5 accent-blue-600"
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="font-medium">Dyslexia Font</span>
-                <input
-                  type="checkbox"
-                  checked={dyslexicFont}
-                  onChange={(e) => setDyslexicFont(e.target.checked)}
-                  className="w-5 h-5 accent-blue-600"
-                />
-              </label>
-            </div>
-          )}
-        </div>
+        {/* Empty div for flexbox balancing since Accessibility controls are fixed */}
+        <div className="w-24 hidden sm:block" />
       </header>
 
       {/* Main Content Area */}
@@ -166,14 +163,6 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
           />
         )}
       </main>
-
-      {/* Mobile Progress Bar */}
-      <div className="sm:hidden w-full h-1 bg-gray-200 dark:bg-gray-700">
-        <div
-           className="h-full bg-blue-600 transition-all duration-500 ease-out"
-           style={{ width: `${progress}%` }}
-        />
-      </div>
     </div>
   );
 };
