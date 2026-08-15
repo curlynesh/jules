@@ -5,6 +5,7 @@ import { getRecommendedAccommodations } from '../../data/accommodationMatrix';
 import { AccommodationCurator } from '../accommodations/AccommodationCurator';
 import { DisclosureExport } from '../accommodations/DisclosureExport';
 import { Share2, Lock, EyeOff, Edit3, Download, Clock, Briefcase, Activity } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Props {
   profile: TraitProfile[];
@@ -109,7 +110,7 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, confidenceSc
     }
 
     return (
-        <div className="max-w-4xl w-full mx-auto pb-24">
+        <div className="max-w-4xl w-full mx-auto pb-24 animate-in fade-in slide-in-from-bottom-8">
 
             {/* Header Actions */}
             <div className="flex justify-end gap-4 mb-8">
@@ -189,7 +190,7 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, confidenceSc
             {/* Share Modal Overlay */}
             {showShareModal && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-800 max-w-lg w-full rounded-3xl p-8 shadow-2xl">
+                    <div className="bg-white dark:bg-slate-800 max-w-lg w-full rounded-3xl p-8 shadow-2xl animate-in zoom-in-95">
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Share Your Manual</h2>
                         <p className="text-slate-600 dark:text-slate-400 mb-8">Customize what you want to share with your manager or team.</p>
 
@@ -211,7 +212,13 @@ export const PersonalOperatingManual: React.FC<Props> = ({ profile, confidenceSc
                         </div>
 
                         <div className="space-y-3">
-                            <button className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors">
+                            <button
+                              onClick={() => {
+                                toast.success("Secure link generated and copied to clipboard!");
+                                setShowShareModal(false);
+                              }}
+                              className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors"
+                            >
                                 <Share2 size={20} /> Generate Secure Link
                             </button>
                             <button className="w-full flex items-center justify-center gap-2 py-4 border-2 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition-colors">

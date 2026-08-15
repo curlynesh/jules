@@ -19,6 +19,7 @@ import { ScoringRule } from '../../types/schema';
 import { Save, AlertTriangle } from 'lucide-react';
 import { generateFinalJSON } from '../../utils/flowTranslator';
 import { validateFlowGraph, ValidationError } from '../../utils/flowValidation';
+import { toast } from 'sonner';
 
 const nodeTypes = { custom_question: CustomQuestionNode };
 
@@ -92,15 +93,17 @@ export const AssessmentBuilder = () => {
       if (validationErrors.length === 0) {
           const finalJSON = generateFinalJSON(nodes, edges, scoringRules);
           console.log("JSON Output:", JSON.stringify(finalJSON, null, 2));
-          alert("JSON Generated successfully. Check console.");
+          toast.success("JSON Generated successfully. Check the developer console.");
+      } else {
+          toast.error("Validation failed. Please fix the errors before publishing.");
       }
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-900 overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full bg-slate-50 dark:bg-slate-900 overflow-hidden">
 
       {/* Top Bar */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+      <div className="absolute top-20 left-4 z-10 flex flex-col gap-2">
         <div className="flex gap-4 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
             <button
                 onClick={handleSave}
@@ -111,7 +114,7 @@ export const AssessmentBuilder = () => {
         </div>
 
         {errors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-xl shadow-lg w-72">
+            <div className="bg-red-50 border border-red-200 p-3 rounded-xl shadow-lg w-72 animate-in slide-in-from-left-4">
                 <h4 className="text-red-800 font-bold text-sm flex items-center gap-1 mb-2">
                     <AlertTriangle size={14} /> Validation Errors
                 </h4>

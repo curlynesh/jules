@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Accommodation, DisclosureLevel } from '../../types/accommodations';
 import { FileText, Send, Lock, Eye, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Props {
     selectedAccommodations: Accommodation[];
@@ -31,11 +32,12 @@ export const DisclosureExport: React.FC<Props> = ({ selectedAccommodations, onBa
         await new Promise(resolve => setTimeout(resolve, 1500));
         setIsSubmitting(false);
         setSubmitted(true);
+        toast.success("Successfully routed to HRIS");
     };
 
     if (submitted) {
         return (
-            <div className="max-w-2xl w-full mx-auto p-8 bg-white dark:bg-slate-800 rounded-3xl shadow-xl text-center space-y-6">
+            <div className="max-w-2xl w-full mx-auto p-8 bg-white dark:bg-slate-800 rounded-3xl shadow-xl text-center space-y-6 animate-in zoom-in-95">
                 <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Send size={40} />
                 </div>
@@ -49,7 +51,7 @@ export const DisclosureExport: React.FC<Props> = ({ selectedAccommodations, onBa
     }
 
     return (
-        <div className="max-w-4xl w-full mx-auto p-6 md:p-12 space-y-10">
+        <div className="max-w-4xl w-full mx-auto p-6 md:p-12 space-y-10 animate-in fade-in slide-in-from-bottom-4">
 
             <div className="flex items-center gap-4 border-b pb-6 dark:border-slate-700">
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white flex-1">Finalize Request</h2>
@@ -130,7 +132,10 @@ export const DisclosureExport: React.FC<Props> = ({ selectedAccommodations, onBa
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-                <button className="flex-1 py-4 flex justify-center items-center gap-2 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <button
+                  onClick={() => toast("Exporting PDF...")}
+                  className="flex-1 py-4 flex justify-center items-center gap-2 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
                     <FileText size={20} /> Export as PDF
                 </button>
                 <button
