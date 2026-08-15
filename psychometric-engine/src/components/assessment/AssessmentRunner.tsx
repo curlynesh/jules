@@ -1,39 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { AssessmentSchema } from '../../types/schema';
 import { useAssessmentStore } from '../../store/assessmentStore';
+import { useAccessibilityStore } from '../../store/accessibilityStore';
 import { QuestionDisplay } from './QuestionDisplay';
 import { PersonalOperatingManual } from '../profile/PersonalOperatingManual';
 import { ArrowLeft, CloudLightning, CloudOff } from 'lucide-react';
+import { AccessibilityControls } from './AccessibilityControls';
 
 interface Props {
   schema: AssessmentSchema;
 }
-
-const AccessibilityControls: React.FC<{
-  highContrast: boolean;
-  toggleContrast: () => void;
-  dyslexicFont: boolean;
-  toggleFont: () => void;
-}> = ({ highContrast, toggleContrast, dyslexicFont, toggleFont }) => {
-  return (
-    <div className="fixed top-4 right-4 flex space-x-3 z-50">
-      <button
-        onClick={toggleContrast}
-        className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {highContrast ? 'Standard Contrast' : 'High Contrast'}
-      </button>
-      <button
-        onClick={toggleFont}
-        className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {dyslexicFont ? 'Standard Font' : 'Dyslexia Font'}
-      </button>
-    </div>
-  );
-};
 
 export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   const {
@@ -50,14 +28,14 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
     clearState
   } = useAssessmentStore();
 
-  const defaultDyslexicFont = schema.config?.theme_overrides?.default_font === 'OpenDyslexic';
-
-  const [highContrast, setHighContrast] = useState(false);
-  const [dyslexicFont, setDyslexicFont] = useState(defaultDyslexicFont);
+  const { highContrast, dyslexicFont, setInitialConfigs } = useAccessibilityStore();
 
   useEffect(() => {
     initializeSession(schema);
-  }, [schema, initializeSession]);
+    setInitialConfigs({
+        font: schema.config?.theme_overrides?.default_font === 'OpenDyslexic'
+    });
+  }, [schema, initializeSession, setInitialConfigs]);
 
   const currentNode = schema.nodes.find(n => n.id === currentNodeId);
   const totalQuestions = schema.nodes.length;
@@ -70,12 +48,7 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
       <div className={`min-h-screen bg-[#FAFAFA] dark:bg-slate-900 p-6 pt-24 transition-colors duration-300 ${
         highContrast ? 'bg-black text-white' : 'text-slate-900 dark:text-slate-100'
       } ${dyslexicFont ? 'font-dyslexic' : 'font-sans'}`}>
-        <AccessibilityControls
-          highContrast={highContrast}
-          toggleContrast={() => setHighContrast(!highContrast)}
-          dyslexicFont={dyslexicFont}
-          toggleFont={() => setDyslexicFont(!dyslexicFont)}
-        />
+        <AccessibilityControls />
         <PersonalOperatingManual
           profile={finalProfile}
           onRestart={() => {
@@ -90,10 +63,10 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   // Loading state if complete but fetching profile
   if (isComplete && !finalProfile) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] dark:bg-slate-900 p-6">
+        <div className={`min-h-screen flex items-center justify-center p-6 ${highContrast ? 'bg-black text-white' : 'bg-[#FAFAFA] dark:bg-slate-900 text-slate-900 dark:text-white'} ${dyslexicFont ? 'font-dyslexic' : 'font-sans'}`}>
             <div className="text-center space-y-4">
                 <CloudLightning className="w-12 h-12 text-blue-500 animate-pulse mx-auto" />
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Generating your Manual...</h2>
+                <h2 className="text-2xl font-bold">Generating your Manual...</h2>
             </div>
         </div>
       );
@@ -106,12 +79,7 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
       highContrast ? 'bg-black text-white' : 'bg-[#FAFAFA] dark:bg-slate-900 text-slate-900 dark:text-slate-100'
     } ${dyslexicFont ? 'font-dyslexic' : 'font-sans'}`}>
 
-      <AccessibilityControls
-        highContrast={highContrast}
-        toggleContrast={() => setHighContrast(!highContrast)}
-        dyslexicFont={dyslexicFont}
-        toggleFont={() => setDyslexicFont(!dyslexicFont)}
-      />
+      <AccessibilityControls />
 
       <header className="w-full p-6 pt-20 md:pt-6 flex justify-between items-center z-10 max-w-4xl mx-auto">
         <button

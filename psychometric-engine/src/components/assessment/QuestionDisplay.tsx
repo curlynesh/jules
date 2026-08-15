@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Node, AnswerType } from '../../types/schema';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Video } from 'lucide-react';
+import { Mic, Video, Volume2 } from 'lucide-react';
+import { useAccessibilityStore } from '../../store/accessibilityStore';
 
 interface Props {
   question: Node;
@@ -25,15 +26,29 @@ const ClarificationText: React.FC<{ text?: string }> = ({ text }) => {
 
 export const QuestionDisplay: React.FC<Props> = ({ question, onAnswer, currentAnswer }) => {
   const [textValue, setTextValue] = useState(typeof currentAnswer === 'string' ? currentAnswer : '');
+  const { reducedMotion, textToSpeech } = useAccessibilityStore();
 
-  // Keep internal text state synced with external answer state safely
   useEffect(() => {
     const timeoutId = setTimeout(() => {
         setTextValue(typeof currentAnswer === 'string' ? currentAnswer : '');
     }, 0);
-
     return () => clearTimeout(timeoutId);
   }, [currentAnswer]);
+
+  // Handle Text-to-Speech
+  useEffect(() => {
+      if (textToSpeech && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel(); // Clear queue
+          const utterance = new SpeechSynthesisUtterance(question.text);
+          utterance.rate = 0.9; // Slightly slower for processing
+
+          if (question.ui_config?.show_clarification_tooltip) {
+             utterance.text += `. Clarification: ${question.ui_config.show_clarification_tooltip}`;
+          }
+
+          window.speechSynthesis.speak(utterance);
+      }
+  }, [question.id, textToSpeech, question.text, question.ui_config?.show_clarification_tooltip]);
 
   const handleTextSubmit = () => {
     if (textValue.trim()) {
@@ -43,20 +58,46 @@ export const QuestionDisplay: React.FC<Props> = ({ question, onAnswer, currentAn
 
   const { ui_config } = question;
 
+  const playSpeechManually = () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(question.text);
+          window.speechSynthesis.speak(utterance);
+      }
+  }
+
+  // Animation variants respect reducedMotion
+  const animationVariants = {
+      initial: reducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 },
+      animate: reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 },
+      exit: reducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }
+  };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={question.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
+        initial={animationVariants.initial}
+        animate={animationVariants.animate}
+        exit={animationVariants.exit}
+        transition={{ duration: reducedMotion ? 0.1 : 0.2 }}
         className="w-full max-w-2xl mx-auto flex flex-col gap-10"
       >
         <div className="space-y-4">
-          <h2 className="text-2xl md:text-3xl font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
-            {question.text}
-          </h2>
+          <div className="flex gap-4 items-start">
+             <h2 className="text-2xl md:text-3xl font-semibold leading-relaxed text-slate-900 dark:text-slate-100 flex-1">
+                {question.text}
+             </h2>
+             {!textToSpeech && (
+                <button
+                  onClick={playSpeechManually}
+                  className="mt-1 p-2 text-slate-400 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors shrink-0"
+                  aria-label="Read question aloud"
+                >
+                    <Volume2 size={20} />
+                </button>
+             )}
+          </div>
           <ClarificationText text={ui_config?.show_clarification_tooltip} />
         </div>
 
