@@ -1,66 +1,59 @@
-export type QuestionType = 'likert' | 'situational' | 'binary' | 'open_text';
+export type QuestionType = 'single_choice' | 'multiple_choice' | 'likert' | 'situational' | 'binary' | 'open_text';
 
 export type AnswerType = string | number | boolean;
 
-export interface TraitMapping {
-  traitId: string;
-  weight: number;
+export interface AssessmentConfig {
+  allow_back_navigation?: boolean;
+  theme_overrides?: {
+    default_font?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 export interface Option {
   id: string;
-  text: string;
-  value: AnswerType; // Numeric for scoring, string for open text
-  traitMappings?: TraitMapping[];
-  nextId?: string; // For explicit branching directly from an option
-}
-
-export interface QuestionNode {
-  type: 'question';
-  id: string;
-  questionType: QuestionType;
-  text: string;
-  description?: string;
-  options?: Option[];
-  allowAudioVideo?: boolean; // True for open_text to allow multi-modal
-}
-
-export interface Condition {
-  questionId: string;
-  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains';
+  label: string;
   value: AnswerType;
-  nextId: string;
 }
 
-export interface LogicNode {
-  type: 'logic';
-  id: string;
-  conditions: Condition[];
-  defaultNextId: string;
+export interface UIConfig {
+  allow_audio_response?: boolean;
+  show_clarification_tooltip?: string;
+  max_length?: number;
 }
 
-export type AssessmentNode = QuestionNode | LogicNode;
-
-export interface Trait {
+export interface Node {
   id: string;
-  name: string;
-  description: string;
+  type: QuestionType;
+  text: string;
+  options?: Option[];
+  ui_config?: UIConfig;
+}
+
+export interface LogicCondition {
+  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'default';
+  target_option?: AnswerType; // Usually matches the Option.id or value
+  go_to_node: string;
+}
+
+export interface LogicEdge {
+  from_node: string;
+  conditions: LogicCondition[];
 }
 
 export interface ScoringRule {
-  traitId: string;
-  minScore: number;
-  maxScore: number;
-  description: string;
+  node_id: string;
+  option_id?: string; // Specific answer choice (if applicable)
+  trait_category: string;
+  weight_modifier: number;
 }
 
 export interface AssessmentSchema {
-  id: string;
+  id: string; // Adding required ID field
+  title: string; // Adding required Title field
   version: string;
-  title: string;
-  description: string;
-  traits: Trait[];
-  nodes: AssessmentNode[];
-  startNodeId: string;
-  scoringRules?: ScoringRule[];
+  config?: AssessmentConfig;
+  nodes: Node[];
+  logic_edges: LogicEdge[];
+  scoring_rules: ScoringRule[];
 }

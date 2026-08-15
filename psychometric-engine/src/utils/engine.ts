@@ -1,44 +1,37 @@
-import { AssessmentSchema, QuestionNode, LogicNode, AssessmentNode, AnswerType } from '../types/schema';
+import { AssessmentSchema, Node, AnswerType } from '../types/schema';
 
 export function getNextNodeId(
-  currentNode: AssessmentNode,
+  currentNode: Node,
   answers: Record<string, AnswerType>,
   schema: AssessmentSchema
 ): string | null {
-  if (currentNode.type === 'question') {
-    const questionNode = currentNode as QuestionNode;
-    const answer = answers[questionNode.id];
+  const currentAnswer = answers[currentNode.id];
 
-    // Check if the selected option has an explicit nextId
-    if (questionNode.options && answer !== undefined) {
-      const selectedOption = questionNode.options.find(opt => opt.value === answer);
-      if (selectedOption?.nextId) {
-        return selectedOption.nextId;
+  // Find the edge originating from the current node
+  const edge = schema.logic_edges?.find(e => e.from_node === currentNode.id);
+
+  if (edge) {
+    for (const condition of edge.conditions) {
+      if (condition.operator === 'default') {
+        return condition.go_to_node;
+      }
+
+      if (evaluateCondition(currentAnswer, condition.operator, condition.target_option)) {
+        return condition.go_to_node;
       }
     }
   }
 
-  // Find the next node in the array (linear sequence) if no logic or explicit jump
+  // If no explicit logic edge exists, move to the next node in the array (linear fallback)
   const currentIndex = schema.nodes.findIndex(n => n.id === currentNode.id);
-  const nextNodeInArray = schema.nodes[currentIndex + 1];
+  const nextNode = schema.nodes[currentIndex + 1];
 
-  if (!nextNodeInArray) return null;
-
-  if (nextNodeInArray.type === 'logic') {
-    const logicNode = nextNodeInArray as LogicNode;
-    for (const condition of logicNode.conditions) {
-      const answerVal = answers[condition.questionId];
-      if (evaluateCondition(answerVal, condition.operator, condition.value)) {
-        return condition.nextId;
-      }
-    }
-    return logicNode.defaultNextId;
-  }
-
-  return nextNodeInArray.id;
+  return nextNode ? nextNode.id : null;
 }
 
-function evaluateCondition(actual: AnswerType, operator: string, expected: AnswerType): boolean {
+function evaluateCondition(actual: AnswerType | undefined, operator: string, expected: AnswerType | undefined): boolean {
+  if (actual === undefined || expected === undefined) return false;
+
   switch (operator) {
     case 'equals': return actual === expected;
     case 'not_equals': return actual !== expected;

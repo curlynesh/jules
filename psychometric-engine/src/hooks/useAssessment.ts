@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AssessmentSchema, QuestionNode, AnswerType } from '../types/schema';
+import { AssessmentSchema, Node, AnswerType } from '../types/schema';
 import { getNextNodeId } from '../utils/engine';
 
 interface AssessmentState {
@@ -10,6 +10,8 @@ interface AssessmentState {
 }
 
 export function useAssessment(schema: AssessmentSchema, storageKey: string) {
+  const startNodeId = schema.nodes[0]?.id || null;
+
   const [state, setState] = useState<AssessmentState>(() => {
     // Attempt to load from localStorage for auto-save/resume
     if (typeof window !== 'undefined') {
@@ -23,7 +25,7 @@ export function useAssessment(schema: AssessmentSchema, storageKey: string) {
       }
     }
     return {
-      currentNodeId: schema.startNodeId,
+      currentNodeId: startNodeId,
       answers: {},
       history: [],
       isComplete: false,
@@ -37,7 +39,7 @@ export function useAssessment(schema: AssessmentSchema, storageKey: string) {
     }
   }, [state, storageKey]);
 
-  const currentNode = schema.nodes.find(n => n.id === state.currentNodeId) as QuestionNode | undefined;
+  const currentNode = schema.nodes.find(n => n.id === state.currentNodeId) as Node | undefined;
 
   const handleAnswer = useCallback((answer: AnswerType) => {
     if (!currentNode) return;
@@ -72,7 +74,7 @@ export function useAssessment(schema: AssessmentSchema, storageKey: string) {
 
   const clearState = useCallback(() => {
     setState({
-      currentNodeId: schema.startNodeId,
+      currentNodeId: startNodeId,
       answers: {},
       history: [],
       isComplete: false,
@@ -80,7 +82,7 @@ export function useAssessment(schema: AssessmentSchema, storageKey: string) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(storageKey);
     }
-  }, [schema, storageKey]);
+  }, [startNodeId, storageKey]);
 
   return {
     currentNode,
@@ -88,9 +90,9 @@ export function useAssessment(schema: AssessmentSchema, storageKey: string) {
     isComplete: state.isComplete,
     handleAnswer,
     handleBack,
-    canGoBack: state.history.length > 0,
+    canGoBack: schema.config?.allow_back_navigation !== false && state.history.length > 0,
     clearState,
-    totalQuestions: schema.nodes.filter(n => n.type === 'question').length,
+    totalQuestions: schema.nodes.length,
     answeredCount: Object.keys(state.answers).length
   };
 }
