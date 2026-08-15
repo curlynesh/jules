@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AssessmentSchema } from '../../types/schema';
-import { useAssessment } from '../../hooks/useAssessment';
+import { useAssessmentStore } from '../../store/assessmentStore';
 import { QuestionDisplay } from './QuestionDisplay';
-import { ArrowLeft, Settings, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Settings, CheckCircle2, CloudLightning, CloudOff } from 'lucide-react';
 
 interface Props {
   schema: AssessmentSchema;
@@ -12,22 +12,35 @@ interface Props {
 
 export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
   const {
-    currentNode,
-    answers,
+    currentNodeId,
+    responses,
     isComplete,
-    handleAnswer,
-    handleBack,
-    canGoBack,
-    clearState,
-    totalQuestions,
-    answeredCount
-  } = useAssessment(schema, `assessment_${schema.id}`);
+    isSyncing,
+    syncError,
+    history,
+    initializeSession,
+    setResponseAndAdvance,
+    goBack,
+    clearState
+  } = useAssessmentStore();
+
+  // Initialize accessibility defaults based on schema
+  const defaultDyslexicFont = schema.config?.theme_overrides?.default_font === 'OpenDyslexic';
 
   const [highContrast, setHighContrast] = useState(false);
-  const [dyslexicFont, setDyslexicFont] = useState(false);
+  const [dyslexicFont, setDyslexicFont] = useState(defaultDyslexicFont);
   const [showSettings, setShowSettings] = useState(false);
 
+  // Initialize store on mount
+  useEffect(() => {
+    initializeSession(schema);
+  }, [schema, initializeSession]);
+
+  const currentNode = schema.nodes.find(n => n.id === currentNodeId);
+  const totalQuestions = schema.nodes.length;
+  const answeredCount = Object.keys(responses).length;
   const progress = Math.min(100, Math.round((answeredCount / totalQuestions) * 100));
+  const canGoBack = schema.config?.allow_back_navigation !== false && history.length > 0;
 
   if (isComplete) {
     return (
@@ -40,7 +53,10 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
           </p>
           <div className="pt-4">
              <button
-              onClick={clearState}
+              onClick={() => {
+                clearState();
+                initializeSession(schema);
+              }}
               className="text-blue-600 hover:text-blue-700 font-medium underline"
             >
               Start Over
@@ -51,6 +67,9 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
     );
   }
 
+  // Avoid render until initialization is complete
+  if (!currentNodeId && !isComplete) return null;
+
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
       highContrast ? 'bg-black text-white' : 'bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white'
@@ -59,7 +78,7 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
       {/* Header / Navigation */}
       <header className="w-full p-4 md:p-6 flex justify-between items-center z-10">
         <button
-          onClick={handleBack}
+          onClick={goBack}
           disabled={!canGoBack}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
             canGoBack
@@ -83,6 +102,19 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
                aria-valuemin={0}
                aria-valuemax={100}
              />
+           </div>
+
+           {/* Sync Status Indicator */}
+           <div className="flex justify-center mt-2 h-4">
+             {syncError ? (
+               <span className="text-xs text-orange-500 flex items-center gap-1 font-medium">
+                  <CloudOff size={12} /> {syncError}
+               </span>
+             ) : isSyncing ? (
+               <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <CloudLightning size={12} className="animate-pulse text-blue-400" /> Saving...
+               </span>
+             ) : null}
            </div>
         </div>
 
@@ -129,8 +161,8 @@ export const AssessmentRunner: React.FC<Props> = ({ schema }) => {
         {currentNode && (
           <QuestionDisplay
             question={currentNode}
-            onAnswer={handleAnswer}
-            currentAnswer={answers[currentNode.id]}
+            onAnswer={(value) => setResponseAndAdvance(currentNode.id, value)}
+            currentAnswer={responses[currentNode.id]}
           />
         )}
       </main>
