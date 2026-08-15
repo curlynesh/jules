@@ -76,3 +76,23 @@ export interface AssessmentSchema {
   scoring_rules: ScoringRule[];
   trait_metadata?: Record<string, TraitMetadata>;
 }
+
+// --- Enterprise Integration & Compliance Types ---
+
+export interface UserSession {
+  id: string;
+  external_candidate_id: string;
+  source_system: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  version_id: string;
+  created_at: string;
+}
+
+export interface ConsentLog {
+  id: string;
+  user_id: string; // Internal User/Session ID
+  action: 'SHARED_WITH_MANAGER' | 'EXPORTED_PDF' | 'REVOKED_ACCESS' | 'DATA_ANONYMIZED';
+  target_email?: string;
+  timestamp: string;
+  ip_address: string;
+}
